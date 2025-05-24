@@ -1,0 +1,13 @@
+target/
+*.iml
+*.log
+*.md
+*.bat
+*.sh
+.idea/
+.vscode/
+*.db
+*.sqlite
+node_modules/
+.DS_Store
+data/

@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  api:
+    build: .
+    container_name: mon-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/cesi_zen
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
