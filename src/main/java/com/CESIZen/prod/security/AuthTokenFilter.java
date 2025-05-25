@@ -22,12 +22,12 @@ import java.util.Map;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
-    private final JwtUtil jwtUtil;
+    private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public AuthTokenFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
+    public AuthTokenFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService) {
+        this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
     }
 
@@ -40,10 +40,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String token = parseJwt(request);
             if (token != null) {
 
-                jwtUtil.validateJwtToken(token);
+                jwtUtils.validateJwtToken(token);
 
-                String username = jwtUtil.getUsernameFromToken(token);
-                String roleName = jwtUtil.getRoleFromToken(token);
+                String username = jwtUtils.getUsernameFromToken(token);
+                String roleName = jwtUtils.getRoleFromToken(token);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));

@@ -15,8 +15,6 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String firstName;
     private String username;
     private String email;
     private String password;
@@ -26,21 +24,14 @@ public class User implements UserDetails {
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = false)
     private Role role;
-    private LocalDateTime registrationDate;
-    // En minute
-    private Integer timeBan;
-    private LocalDateTime banDate;
 
     public User() {}
 
-    public User(String name, String firstName, String username, String email, String password, Role role) {
-        this.name = name;
-        this.firstName = firstName;
+    public User(String username, String email, String password, Role role) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.status = UserStatusEnum.ACTIVE;
-        this.registrationDate = LocalDateTime.now();
         this.role = role;
     }
 
@@ -50,28 +41,12 @@ public class User implements UserDetails {
         return List.of(authority);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
     }
 
     public String getUsername() {
@@ -114,29 +89,5 @@ public class User implements UserDetails {
 
     public void setStatus(UserStatusEnum status) {
         this.status = status;
-    }
-
-    public LocalDateTime getRegistrationDate() {
-        return registrationDate;
-    }
-
-    public void setRegistrationDate(LocalDateTime registrationDate) {
-        this.registrationDate = registrationDate;
-    }
-
-    public Integer getTimeBan() {
-        return timeBan;
-    }
-
-    public void setTimeBan(Integer timeBan) {
-        this.timeBan = timeBan;
-    }
-
-    public LocalDateTime getBanDate() {
-        return banDate;
-    }
-
-    public void setBanDate(LocalDateTime banDate) {
-        this.banDate = banDate;
     }
 }

@@ -23,12 +23,12 @@ public class WebSecurityConfig {
     @Autowired
     private CustomAccessDeniedHandler accessDeniedHandler;
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtils;
     @Autowired
     private UserDetailsService userDetailsService;
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter(jwtUtil,userDetailsService);
+        return new AuthTokenFilter(jwtUtils,userDetailsService);
     }
     @Bean
     public AuthenticationManager authenticationManager(
@@ -54,7 +54,7 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/register", "/login","/resources","/category").permitAll()
+                                .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                                 .anyRequest().authenticated()
                 )
