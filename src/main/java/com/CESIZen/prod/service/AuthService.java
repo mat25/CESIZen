@@ -72,14 +72,14 @@ public class AuthService {
 
     public MessageDTO register(RegisterDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email déjà utilisé");
+            throw new BadRequestException("Email déjà utilisé");
         }
         if (userRepository.existsByUsername(dto.getUsername())) {
             throw new BadRequestException("Le username est déjà utilisé.");
         }
 
         Role userRole = roleRepository.findByName(RoleEnum.USER)
-                .orElseThrow(() -> new RuntimeException("Rôle USER introuvable"));
+                .orElseThrow(() -> new BadRequestException("Rôle USER introuvable"));
 
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
