@@ -19,6 +19,14 @@ public class DiagnosticScoreRangeService {
         this.repository = repository;
     }
 
+    public String getMessageForScore(int score) {
+        return repository.findAll().stream()
+                .filter(range -> score >= range.getMinPoints() && score <= range.getMaxPoints())
+                .map(DiagnosticScoreRange::getMessage)
+                .findFirst()
+                .orElse("Niveau inconnu");
+    }
+
     public List<DiagnosticScoreRangeDTO> getAll() {
         return repository.findAll().stream().map(this::toDTO).toList();
     }

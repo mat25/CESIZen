@@ -3,22 +3,21 @@ package com.CESIZen.prod.dto.diagnostic;
 import com.CESIZen.prod.entity.DiagnosticResult;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class DiagnosticHistoryDTO {
     private int score;
     private String level;
     private LocalDateTime submittedAt;
+    private List<DiagnosticResultEventDTO> events;
 
-    public DiagnosticHistoryDTO(DiagnosticResult result) {
+    public DiagnosticHistoryDTO(DiagnosticResult result, String levelMessage) {
         this.score = result.getScore();
-        this.level = computeLevel(result.getScore());
+        this.level = levelMessage;
         this.submittedAt = result.getSubmittedAt();
-    }
-
-    private String computeLevel(int score) {
-        if (score < 150) return "Faible";
-        if (score < 300) return "Modéré";
-        return "Élevé";
+        this.events = result.getEventDetails().stream()
+                .map(DiagnosticResultEventDTO::new)
+                .toList();
     }
 
     public int getScore() {
@@ -43,6 +42,14 @@ public class DiagnosticHistoryDTO {
 
     public void setSubmittedAt(LocalDateTime submittedAt) {
         this.submittedAt = submittedAt;
+    }
+
+    public List<DiagnosticResultEventDTO> getEvents() {
+        return events;
+    }
+
+    public void setEvents(List<DiagnosticResultEventDTO> events) {
+        this.events = events;
     }
 }
 

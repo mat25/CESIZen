@@ -6,11 +6,11 @@ import com.CESIZen.prod.dto.diagnostic.DiagnosticResultDTO;
 import com.CESIZen.prod.dto.diagnostic.DiagnosticSubmitDTO;
 import com.CESIZen.prod.entity.DiagnosticEvent;
 import com.CESIZen.prod.entity.DiagnosticResult;
-import com.CESIZen.prod.entity.DiagnosticScoreRange;
+import com.CESIZen.prod.entity.DiagnosticResultEvent;
 import com.CESIZen.prod.entity.User;
+import com.CESIZen.prod.exception.NotFoundException;
 import com.CESIZen.prod.repository.DiagnosticEventRepository;
 import com.CESIZen.prod.repository.DiagnosticResultRepository;
-import com.CESIZen.prod.repository.DiagnosticScoreRangeRepository;
 import com.CESIZen.prod.security.SecurityUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -23,17 +23,17 @@ public class DiagnosticService {
     private final DiagnosticEventRepository eventRepo;
     private final DiagnosticResultRepository resultRepo;
     private final SecurityUtils securityUtils;
-    private final DiagnosticScoreRangeRepository rangeRepo;
+    private final DiagnosticScoreRangeService rangeService;
 
     public DiagnosticService(
             DiagnosticEventRepository eventRepo,
             DiagnosticResultRepository resultRepo,
             SecurityUtils securityUtils,
-            DiagnosticScoreRangeRepository rangeRepo) {
+            DiagnosticScoreRangeService rangeService) {
         this.eventRepo = eventRepo;
         this.resultRepo = resultRepo;
         this.securityUtils = securityUtils;
-        this.rangeRepo = rangeRepo;
+        this.rangeService = rangeService;
     }
 
     public List<DiagnosticEventDTO> getAllEvents() {
@@ -43,26 +43,45 @@ public class DiagnosticService {
     }
 
     public DiagnosticResultDTO submitDiagnostic(DiagnosticSubmitDTO dto, Authentication authentication) {
-        List<DiagnosticEvent> selectedEvents = eventRepo.findAllById(dto.getSelectedEventIds());
 
-        int score = selectedEvents.stream()
-                .mapToInt(DiagnosticEvent::getPoints)
+        int score = dto.getSelectedEvents().stream()
+                .mapToInt(data -> {
+                    DiagnosticEvent event = eventRepo.findById(data.getEventId())
+                            .orElseThrow(() -> new NotFoundException("Événement introuvable"));
+                    return event.getPoints() * data.getOccurrences();
+                })
                 .sum();
 
-        String message = rangeRepo.findFirstByMinPointsLessThanEqualAndMaxPointsGreaterThanEqual(score, score)
-                .map(DiagnosticScoreRange::getMessage)
-                .orElse("Aucun message de résultat configuré");
+        String message = rangeService.getMessageForScore(score);
 
         if (authentication != null && authentication.isAuthenticated()) {
             User user = securityUtils.getCurrentUser(authentication);
+
             DiagnosticResult result = new DiagnosticResult();
             result.setUser(user);
             result.setScore(score);
+
+            List<DiagnosticResultEvent> details = dto.getSelectedEvents().stream()
+                    .map(data -> {
+                        DiagnosticEvent event = eventRepo.findById(data.getEventId())
+                                .orElseThrow(() -> new NotFoundException("Événement introuvable"));
+
+                        DiagnosticResultEvent resultEvent = new DiagnosticResultEvent();
+                        resultEvent.setEvent(event);
+                        resultEvent.setOccurrences(data.getOccurrences());
+                        resultEvent.setResult(result);
+                        return resultEvent;
+                    })
+                    .toList();
+
+            result.setEventDetails(details);
+
             resultRepo.save(result);
         }
 
         return new DiagnosticResultDTO(score, message);
     }
+
 
     public DiagnosticEventDTO createEvent(DiagnosticEventDTO dto) {
         DiagnosticEvent event = new DiagnosticEvent();
@@ -86,7 +105,10 @@ public class DiagnosticService {
     public List<DiagnosticHistoryDTO> getUserHistory(Authentication authentication) {
         User user = securityUtils.getCurrentUser(authentication);
         return resultRepo.findAllByUserId(user.getId()).stream()
-                .map(DiagnosticHistoryDTO::new)
+                .map(result -> {
+                    String message = rangeService.getMessageForScore(result.getScore());
+                    return new DiagnosticHistoryDTO(result, message);
+                })
                 .toList();
     }
 }
