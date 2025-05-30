@@ -1,10 +1,16 @@
 package com.CESIZen.prod.dto.diagnostic;
 
 import com.CESIZen.prod.entity.DiagnosticEvent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class DiagnosticEventDTO {
+    @NotNull(message = "L'id ne peut pas être nul")
     private Long id;
+    @NotBlank(message = "Le label ne peut pas être vide")
     private String label;
+    @Min(value = 0, message = "Les points doivent être positifs ou nuls")
     private int points;
 
     public DiagnosticEventDTO() {}

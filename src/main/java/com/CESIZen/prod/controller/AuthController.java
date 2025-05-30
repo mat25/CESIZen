@@ -7,6 +7,7 @@ import com.CESIZen.prod.dto.user.RegisterWithRoleDTO;
 import com.CESIZen.prod.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,19 +23,19 @@ public class AuthController {
 
     @Operation(summary = "Connexion d’un utilisateur", description = "Retourne un JWT (TokenDTO). Aucune authentification requise.")
     @PostMapping("/login")
-    public ResponseEntity<TokenDTO> login(@RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<TokenDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
         return ResponseEntity.ok(authService.login(loginDTO));
     }
 
     @Operation(summary = "Enregistrement d’un utilisateur", description = "Retourne un message de succès. Aucune authentification requise.")
     @PostMapping("/register")
-    public ResponseEntity<MessageDTO> register(@RequestBody RegisterDTO registerDTO) {
+    public ResponseEntity<MessageDTO> register(@Valid @RequestBody RegisterDTO registerDTO) {
         return ResponseEntity.ok(authService.register(registerDTO));
     }
 
     @Operation(summary = "Enregistrement d’un utilisateur avec rôle (USER ou ADMIN)", description = "Retourne un message de succès. Requiert un rôle ADMIN.")
     @PostMapping("/admin/users")
-    public ResponseEntity<MessageDTO> registerWithRole(@RequestBody RegisterWithRoleDTO dto) {
+    public ResponseEntity<MessageDTO> registerWithRole(@Valid @RequestBody RegisterWithRoleDTO dto) {
         return ResponseEntity.ok(authService.registerWithRole(dto));
     }
 }

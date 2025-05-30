@@ -1,7 +1,11 @@
 package com.CESIZen.prod.dto.user;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginDTO {
+    @NotBlank(message = "Le nom d'utilisateur ne peut pas être vide.")
     private String username;
+    @NotBlank(message = "Le mot de passe ne peut pas être vide.")
     private String password;
 
     public LoginDTO() {

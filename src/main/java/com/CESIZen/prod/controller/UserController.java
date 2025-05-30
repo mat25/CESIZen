@@ -6,6 +6,7 @@ import com.CESIZen.prod.dto.user.UserDTO;
 import com.CESIZen.prod.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class UserController {
     @Operation(summary = "Modifier ses informations personnelles", description = "Retourne un UserDTO mis à jour. Requiert l'authentification (utilisateur connecté).")
     @ApiResponse(responseCode = "200", description = "Utilisateur mis à jour")
     @PatchMapping("/me")
-    public ResponseEntity<UserDTO> updateCurrentUser(Authentication authentication, @RequestBody UpdateUserDTO updateUserDTO) {
+    public ResponseEntity<UserDTO> updateCurrentUser(Authentication authentication, @Valid @RequestBody UpdateUserDTO updateUserDTO) {
         return ResponseEntity.ok(userService.updateCurrentUser(authentication, updateUserDTO));
     }
 

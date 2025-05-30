@@ -56,7 +56,7 @@ public class ResetPasswordService {
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
-        tokenRepository.delete(resetToken); // token à usage unique
+        tokenRepository.delete(resetToken);
 
         return new MessageDTO("Mot de passe réinitialisé avec succès");
     }

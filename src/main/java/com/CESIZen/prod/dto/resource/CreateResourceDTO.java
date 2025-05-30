@@ -1,7 +1,11 @@
 package com.CESIZen.prod.dto.resource;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CreateResourceDTO {
+    @NotBlank(message = "Le titre ne peut pas être vide")
     private String title;
+    @NotBlank(message = "Le contenu ne peut pas être vide")
     private String content;
     private String imageUrl;
 

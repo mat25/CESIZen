@@ -4,6 +4,7 @@ import com.CESIZen.prod.dto.MessageDTO;
 import com.CESIZen.prod.dto.diagnostic.DiagnosticScoreRangeDTO;
 import com.CESIZen.prod.service.DiagnosticScoreRangeService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,14 +28,14 @@ public class DiagnosticRangeController {
 
     @Operation(summary = "Créer une plage de score", description = "Requiert un rôle ADMIN.")
     @PostMapping
-    public ResponseEntity<DiagnosticScoreRangeDTO> create(@RequestBody DiagnosticScoreRangeDTO dto) {
+    public ResponseEntity<DiagnosticScoreRangeDTO> create(@Valid @RequestBody DiagnosticScoreRangeDTO dto) {
         return ResponseEntity.ok(service.create(dto));
     }
 
     @Operation(summary = "Modifier une plage de score", description = "Requiert un rôle ADMIN.")
     @PutMapping("/{id}")
     public ResponseEntity<DiagnosticScoreRangeDTO> update(@PathVariable Long id,
-                                                          @RequestBody DiagnosticScoreRangeDTO dto) {
+                                                          @Valid @RequestBody DiagnosticScoreRangeDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));
     }
 

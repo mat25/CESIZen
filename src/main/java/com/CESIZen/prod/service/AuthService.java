@@ -38,14 +38,6 @@ public class AuthService {
 
     public TokenDTO login(LoginDTO request) {
 
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
-            throw new BadRequestException("Le username est requis.");
-        }
-
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new BadRequestException("Le mot de passe est requis.");
-        }
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),

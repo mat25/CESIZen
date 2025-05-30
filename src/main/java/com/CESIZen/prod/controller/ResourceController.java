@@ -6,6 +6,7 @@ import com.CESIZen.prod.dto.resource.ResourceDTO;
 import com.CESIZen.prod.dto.resource.UpdateResourceDTO;
 import com.CESIZen.prod.service.ResourceService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,14 +36,14 @@ public class ResourceController {
 
     @Operation(summary = "Créer une ressource", description = "Requiert un rôle ADMIN.")
     @PostMapping
-    public ResponseEntity<ResourceDTO> create(@RequestBody CreateResourceDTO dto) {
+    public ResponseEntity<ResourceDTO> create(@Valid @RequestBody CreateResourceDTO dto) {
         return ResponseEntity.ok(resourceService.create(dto));
     }
 
     @Operation(summary = "Modifier une ressource", description = "Requiert un rôle ADMIN.")
     @PatchMapping("/{id}")
     public ResponseEntity<ResourceDTO> update(@PathVariable Long id,
-                                              @RequestBody UpdateResourceDTO dto) {
+                                              @Valid @RequestBody UpdateResourceDTO dto) {
         return ResponseEntity.ok(resourceService.update(id, dto));
     }
 
