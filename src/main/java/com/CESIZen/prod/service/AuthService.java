@@ -10,6 +10,8 @@ import com.CESIZen.prod.exception.NotFoundException;
 import com.CESIZen.prod.repository.RoleRepository;
 import com.CESIZen.prod.repository.UserRepository;
 import com.CESIZen.prod.security.JwtUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,7 +39,7 @@ public class AuthService {
     }
 
     public TokenDTO login(LoginDTO request) {
-
+        log.info("Tentative de connexion pour l'utilisateur '{}'", request.getUsername());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -50,29 +52,38 @@ public class AuthService {
         User user = userRepository.findByUsernameAndDeletedFalse(userDetails.getUsername());
 
         if (user == null) {
+            log.warn("Échec de connexion : utilisateur '{}' introuvable", userDetails.getUsername());
             throw new NotFoundException("Utilisateur introuvable.");
         }
 
         if (user.getStatus() == UserStatusEnum.INACTIVE) {
+            log.warn("Échec de connexion : compte utilisateur '{}' désactivé", user.getUsername());
             throw new BadRequestException("Ce compte est désactivé. Veuillez contacter un administrateur.");
         }
 
         String role = user.getRole().getName().name();
         String token = jwtUtils.generateToken(user.getUsername(), role);
 
+        log.info("Connexion réussie pour l'utilisateur '{}', rôle '{}'", user.getUsername(), role);
         return new TokenDTO(token, user.getId());
     }
 
     public MessageDTO register(RegisterDTO dto) {
+        log.info("Inscription d'un nouvel utilisateur avec username '{}' et email '{}'", dto.getUsername(), dto.getEmail());
         if (userRepository.existsByEmailAndDeletedFalse(dto.getEmail())) {
+            log.warn("Inscription échouée : email '{}' déjà utilisé", dto.getEmail());
             throw new BadRequestException("Email déjà utilisé");
         }
         if (userRepository.existsByUsernameAndDeletedFalse(dto.getUsername())) {
+            log.warn("Inscription échouée : username '{}' déjà utilisé", dto.getUsername());
             throw new BadRequestException("Le username est déjà utilisé.");
         }
 
         Role userRole = roleRepository.findByName(RoleEnum.USER)
-                .orElseThrow(() -> new BadRequestException("Rôle USER introuvable"));
+                .orElseThrow(() -> {
+                    log.error("Rôle USER introuvable lors de l'inscription de '{}'", dto.getUsername());
+                    return new BadRequestException("Rôle USER introuvable");
+                });
 
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -82,23 +93,36 @@ public class AuthService {
         user.setRole(userRole);
 
         userRepository.save(user);
+        log.info("Nouvel utilisateur '{}' enregistré avec succès", dto.getUsername());
         return new MessageDTO("Utilisateur enregistré");
     }
 
-    public MessageDTO registerWithRole(RegisterWithRoleDTO dto) {
+    public MessageDTO registerWithRole(RegisterWithRoleDTO dto, Authentication authentication) {
+        String adminUsername = authentication.getName();
+        log.info("Admin '{}' inscrit un utilisateur avec rôle '{}', username '{}', email '{}'",
+                adminUsername, dto.getRole(), dto.getUsername(), dto.getEmail());
+
         if (userRepository.existsByEmailAndDeletedFalse(dto.getEmail())) {
+            log.warn("Inscription échouée : email '{}' déjà utilisé par admin '{}'", dto.getEmail(), adminUsername);
             throw new BadRequestException("Email déjà utilisé");
         }
         if (userRepository.existsByUsernameAndDeletedFalse(dto.getUsername())) {
+            log.warn("Inscription échouée : username '{}' déjà utilisé par admin '{}'", dto.getUsername(), adminUsername);
             throw new BadRequestException("Le username est déjà utilisé.");
         }
 
         if (dto.getRole() != RoleEnum.USER && dto.getRole() != RoleEnum.ADMIN) {
+            log.warn("Inscription échouée : rôle non autorisé '{}' pour l'utilisateur '{}' par admin '{}'",
+                    dto.getRole(), dto.getUsername(), adminUsername);
             throw new BadRequestException("Seuls les rôles USER ou ADMIN peuvent être attribués.");
         }
 
         Role role = roleRepository.findByName(dto.getRole())
-                .orElseThrow(() -> new BadRequestException("Rôle " + dto.getRole() + " introuvable"));
+                .orElseThrow(() -> {
+                    log.error("Rôle '{}' introuvable lors de l'inscription de '{}' par admin '{}'",
+                            dto.getRole(), dto.getUsername(), adminUsername);
+                    return new BadRequestException("Rôle " + dto.getRole() + " introuvable");
+                });
 
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -108,6 +132,7 @@ public class AuthService {
         user.setRole(role);
 
         userRepository.save(user);
+        log.info("Admin '{}' a enregistré avec succès l'utilisateur '{}' avec rôle '{}'", adminUsername, dto.getUsername(), dto.getRole());
         return new MessageDTO("Utilisateur avec rôle " + dto.getRole() + " enregistré");
     }
 

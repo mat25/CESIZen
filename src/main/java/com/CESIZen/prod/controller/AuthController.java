@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,7 +36,7 @@ public class AuthController {
 
     @Operation(summary = "Enregistrement d’un utilisateur avec rôle (USER ou ADMIN)", description = "Retourne un message de succès. Requiert un rôle ADMIN.")
     @PostMapping("/admin/users")
-    public ResponseEntity<MessageDTO> registerWithRole(@Valid @RequestBody RegisterWithRoleDTO dto) {
-        return ResponseEntity.ok(authService.registerWithRole(dto));
+    public ResponseEntity<MessageDTO> registerWithRole(@Valid @RequestBody RegisterWithRoleDTO dto, Authentication authentication) {
+        return ResponseEntity.ok(authService.registerWithRole(dto,authentication));
     }
 }
