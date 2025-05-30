@@ -3,6 +3,7 @@ package com.CESIZen.prod.service;
 import com.CESIZen.prod.dto.*;
 import com.CESIZen.prod.dto.user.LoginDTO;
 import com.CESIZen.prod.dto.user.RegisterDTO;
+import com.CESIZen.prod.dto.user.RegisterWithRoleDTO;
 import com.CESIZen.prod.entity.*;
 import com.CESIZen.prod.exception.BadRequestException;
 import com.CESIZen.prod.exception.NotFoundException;
@@ -54,7 +55,7 @@ public class AuthService {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        User user = userRepository.findByUsername(userDetails.getUsername());
+        User user = userRepository.findByUsernameAndDeletedFalse(userDetails.getUsername());
 
         if (user == null) {
             throw new NotFoundException("Utilisateur introuvable.");
@@ -71,21 +72,51 @@ public class AuthService {
     }
 
     public MessageDTO register(RegisterDTO dto) {
-        if (userRepository.existsByEmail(dto.getEmail())) {
+        if (userRepository.existsByEmailAndDeletedFalse(dto.getEmail())) {
             throw new BadRequestException("Email déjà utilisé");
         }
-        if (userRepository.existsByUsername(dto.getUsername())) {
+        if (userRepository.existsByUsernameAndDeletedFalse(dto.getUsername())) {
             throw new BadRequestException("Le username est déjà utilisé.");
         }
 
         Role userRole = roleRepository.findByName(RoleEnum.USER)
                 .orElseThrow(() -> new BadRequestException("Rôle USER introuvable"));
 
-        String hashedPassword = passwordEncoder.encode(dto.getPassword());
-
-        User user = new User(dto.getUsername(), dto.getEmail(), hashedPassword, userRole);
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setStatus(UserStatusEnum.ACTIVE);
+        user.setRole(userRole);
 
         userRepository.save(user);
         return new MessageDTO("Utilisateur enregistré");
     }
+
+    public MessageDTO registerWithRole(RegisterWithRoleDTO dto) {
+        if (userRepository.existsByEmailAndDeletedFalse(dto.getEmail())) {
+            throw new BadRequestException("Email déjà utilisé");
+        }
+        if (userRepository.existsByUsernameAndDeletedFalse(dto.getUsername())) {
+            throw new BadRequestException("Le username est déjà utilisé.");
+        }
+
+        if (dto.getRole() != RoleEnum.USER && dto.getRole() != RoleEnum.ADMIN) {
+            throw new BadRequestException("Seuls les rôles USER ou ADMIN peuvent être attribués.");
+        }
+
+        Role role = roleRepository.findByName(dto.getRole())
+                .orElseThrow(() -> new BadRequestException("Rôle " + dto.getRole() + " introuvable"));
+
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setStatus(UserStatusEnum.ACTIVE);
+        user.setRole(role);
+
+        userRepository.save(user);
+        return new MessageDTO("Utilisateur avec rôle " + dto.getRole() + " enregistré");
+    }
+
 }

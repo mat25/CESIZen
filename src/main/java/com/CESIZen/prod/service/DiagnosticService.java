@@ -1,5 +1,6 @@
 package com.CESIZen.prod.service;
 
+import com.CESIZen.prod.dto.MessageDTO;
 import com.CESIZen.prod.dto.diagnostic.DiagnosticEventDTO;
 import com.CESIZen.prod.dto.diagnostic.DiagnosticHistoryDTO;
 import com.CESIZen.prod.dto.diagnostic.DiagnosticResultDTO;
@@ -37,7 +38,7 @@ public class DiagnosticService {
     }
 
     public List<DiagnosticEventDTO> getAllEvents() {
-        return eventRepo.findAll().stream()
+        return eventRepo.findAllByDeletedFalse().stream()
                 .map(DiagnosticEventDTO::new)
                 .toList();
     }
@@ -46,7 +47,7 @@ public class DiagnosticService {
 
         int score = dto.getSelectedEvents().stream()
                 .mapToInt(data -> {
-                    DiagnosticEvent event = eventRepo.findById(data.getEventId())
+                    DiagnosticEvent event = eventRepo.findByIdAndDeletedFalse(data.getEventId())
                             .orElseThrow(() -> new NotFoundException("Événement introuvable"));
                     return event.getPoints() * data.getOccurrences();
                 })
@@ -63,7 +64,7 @@ public class DiagnosticService {
 
             List<DiagnosticResultEvent> details = dto.getSelectedEvents().stream()
                     .map(data -> {
-                        DiagnosticEvent event = eventRepo.findById(data.getEventId())
+                        DiagnosticEvent event = eventRepo.findByIdAndDeletedFalse(data.getEventId())
                                 .orElseThrow(() -> new NotFoundException("Événement introuvable"));
 
                         DiagnosticResultEvent resultEvent = new DiagnosticResultEvent();
@@ -91,15 +92,21 @@ public class DiagnosticService {
     }
 
     public DiagnosticEventDTO updateEvent(Long id, DiagnosticEventDTO dto) {
-        DiagnosticEvent event = eventRepo.findById(id)
+        DiagnosticEvent event = eventRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Événement introuvable"));
         event.setLabel(dto.getLabel());
         event.setPoints(dto.getPoints());
         return new DiagnosticEventDTO(eventRepo.save(event));
     }
 
-    public void deleteEvent(Long id) {
-        eventRepo.deleteById(id);
+    public MessageDTO deleteEvent(Long id) {
+        DiagnosticEvent event = eventRepo.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Événement introuvable"));
+
+        event.setDeleted(true);
+        eventRepo.save(event);
+
+        return new MessageDTO("Événement supprimé");
     }
 
     public List<DiagnosticHistoryDTO> getUserHistory(Authentication authentication) {

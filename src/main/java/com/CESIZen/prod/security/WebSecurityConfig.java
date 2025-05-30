@@ -4,6 +4,7 @@ import com.CESIZen.prod.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -54,8 +55,28 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/auth/**").permitAll()
+
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+                                .requestMatchers("/auth/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/auth/**").permitAll()
+
+                                .requestMatchers(HttpMethod.GET,"/diagnostic").permitAll()
+                                .requestMatchers("/diagnostic/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/diagnostic/ranges/**").hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/resources").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/resources/*").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/resources").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/resources/*").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/resources/*").hasRole("ADMIN")
+
+                                .requestMatchers("/users/me", "/users/me/**").authenticated()
+                                .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/users/*/deactivate").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/users/*/activate").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/users/*").hasRole("ADMIN")
+
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

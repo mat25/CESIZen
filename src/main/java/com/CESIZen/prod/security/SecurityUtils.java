@@ -21,7 +21,7 @@ public class SecurityUtils {
             throw new BadRequestException("Utilisateur non authentifié.");
         }
 
-        User user = userRepository.findByUsername(authentication.getName());
+        User user = userRepository.findByUsernameAndDeletedFalse(authentication.getName());
 
         if (user == null) {
             throw new NotFoundException("Utilisateur non trouvé.");

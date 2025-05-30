@@ -3,15 +3,22 @@ package com.CESIZen.prod.service;
 import com.CESIZen.prod.dto.*;
 import com.CESIZen.prod.dto.user.UpdateUserDTO;
 import com.CESIZen.prod.dto.user.UserDTO;
+import com.CESIZen.prod.entity.RoleEnum;
 import com.CESIZen.prod.entity.User;
 import com.CESIZen.prod.entity.UserStatusEnum;
 import com.CESIZen.prod.exception.NotFoundException;
+import com.CESIZen.prod.repository.DiagnosticResultRepository;
+import com.CESIZen.prod.repository.PasswordResetTokenRepository;
 import com.CESIZen.prod.repository.UserRepository;
 import com.CESIZen.prod.security.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -19,13 +26,26 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtils securityUtils;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final DiagnosticResultRepository diagnosticResultRepository;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       SecurityUtils securityUtils) {
+                       SecurityUtils securityUtils,
+                       PasswordResetTokenRepository passwordResetTokenRepository,
+                       DiagnosticResultRepository diagnosticResultRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.securityUtils = securityUtils;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.diagnosticResultRepository = diagnosticResultRepository;
+    }
+
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAllByDeletedFalse().stream()
+                .filter(user -> user.getRole().getName() == RoleEnum.USER)
+                .map(UserDTO::new)
+                .collect(Collectors.toList());
     }
 
     public UserDTO getCurrentUser(Authentication authentication) {
@@ -51,12 +71,13 @@ public class UserService {
 
     public MessageDTO deleteCurrentUser(Authentication authentication) {
         User user = securityUtils.getCurrentUser(authentication);
-        userRepository.delete(user);
+        user.setDeleted(true);
+        userRepository.save(user);
         return new MessageDTO("Compte supprimé");
     }
 
     public UserDTO deactivateUser(Long id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Utilisateur non trouvé"));
         user.setStatus(UserStatusEnum.INACTIVE);
         userRepository.save(user);
@@ -64,7 +85,7 @@ public class UserService {
     }
 
     public UserDTO activateUser(Long id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Utilisateur non trouvé"));
         user.setStatus(UserStatusEnum.ACTIVE);
         userRepository.save(user);
@@ -72,9 +93,10 @@ public class UserService {
     }
 
     public MessageDTO deleteUserById(Long id) {
-        if (!userRepository.existsById(id))
-            throw new NotFoundException("Utilisateur non trouvé");
-        userRepository.deleteById(id);
+        User user = userRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Utilisateur non trouvé"));
+        user.setDeleted(true);
+        userRepository.save(user);
         return new MessageDTO("Utilisateur supprimé");
     }
 
@@ -89,8 +111,14 @@ public class UserService {
         }
     }
 
+    @Transactional
     public MessageDTO requestDataDeletion(Authentication authentication) {
         User user = securityUtils.getCurrentUser(authentication);
+
+        passwordResetTokenRepository.deleteAllByUser(user);
+
+        diagnosticResultRepository.deleteAllByUser(user);
+
         userRepository.delete(user);
         return new MessageDTO("Demande de suppression des données enregistrée");
     }

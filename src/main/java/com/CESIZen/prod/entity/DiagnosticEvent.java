@@ -15,6 +15,9 @@ public class DiagnosticEvent {
     @Column(nullable = false)
     private int points;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     public Long getId() {
         return id;
     }
@@ -37,5 +40,13 @@ public class DiagnosticEvent {
 
     public void setPoints(int points) {
         this.points = points;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }

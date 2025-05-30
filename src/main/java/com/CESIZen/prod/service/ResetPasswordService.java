@@ -28,7 +28,7 @@ public class ResetPasswordService {
     }
 
     public MessageDTO requestReset(ResetPasswordRequestDTO dto) {
-        User user = userRepository.findByEmail(dto.getEmail())
+        User user = userRepository.findByEmailAndDeletedFalse(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Aucun compte associé à cet email"));
 
         String token = UUID.randomUUID().toString();

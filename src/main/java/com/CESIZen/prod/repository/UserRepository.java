@@ -5,13 +5,19 @@ import org.springframework.stereotype.Repository;
 
 import com.CESIZen.prod.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
-    boolean existsByEmail(String email);
+    List<User> findAllByDeletedFalse();
 
-    User findByUsername(String username);
-    boolean existsByUsername(String username);
+    Optional<User> findByIdAndDeletedFalse(Long id);
+    boolean existsByIdAndDeletedFalse(Long id);
+
+    Optional<User> findByEmailAndDeletedFalse(String email);
+    boolean existsByEmailAndDeletedFalse(String email);
+
+    User findByUsernameAndDeletedFalse(String username);
+    boolean existsByUsernameAndDeletedFalse(String username);
 }
