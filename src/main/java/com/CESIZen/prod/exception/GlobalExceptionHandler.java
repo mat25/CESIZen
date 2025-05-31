@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDTO> handleGeneric(Exception ex) {
         log.error("Exception inattendue: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorDTO("Erreur interne : " + ex.getMessage()));
+                .body(new ErrorDTO(ex.getMessage()));
     }
 }
 
