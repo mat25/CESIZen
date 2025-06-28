@@ -9,6 +9,12 @@ public class CreateResourceDTO {
     private String content;
     private String imageUrl;
 
+    public CreateResourceDTO(String title, String content, String imageUrl) {
+        this.title = title;
+        this.content = content;
+        this.imageUrl = imageUrl;
+    }
+
     public String getTitle() {
         return title;
     }

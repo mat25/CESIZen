@@ -15,6 +15,17 @@ public class DiagnosticScoreRange {
     @Column(nullable = false)
     private String message;
 
+    public DiagnosticScoreRange() {
+    }
+
+    public DiagnosticScoreRange(Long id, int minPoints, int maxPoints, String message) {
+        this.id = id;
+        this.minPoints = minPoints;
+        this.maxPoints = maxPoints;
+        this.message = message;
+    }
+
+
     public Long getId() {
         return id;
     }

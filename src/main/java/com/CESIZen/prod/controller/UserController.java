@@ -1,6 +1,7 @@
 package com.CESIZen.prod.controller;
 
 import com.CESIZen.prod.dto.*;
+import com.CESIZen.prod.dto.user.UpdatePasswordDTO;
 import com.CESIZen.prod.dto.user.UpdateUserDTO;
 import com.CESIZen.prod.dto.user.UserDTO;
 import com.CESIZen.prod.service.UserService;
@@ -37,6 +38,12 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<UserDTO> updateCurrentUser(Authentication authentication, @Valid @RequestBody UpdateUserDTO updateUserDTO) {
         return ResponseEntity.ok(userService.updateCurrentUser(authentication, updateUserDTO));
+    }
+
+    @Operation(summary = "Changer le mot de passe", description = "Requiert l'ancien mot de passe. Retourne un MessageDTO.")
+    @PatchMapping("/me/password")
+    public ResponseEntity<MessageDTO> updatePassword(Authentication authentication, @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) {
+        return ResponseEntity.ok(userService.updatePassword(authentication, updatePasswordDTO));
     }
 
     @Operation(summary = "Supprimer le compte de l'utilisateur connecté", description = "Permet à un utilisateur de supprimer son propre compte. Requiert l'authentification (utilisateur connecté).")

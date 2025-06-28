@@ -1,11 +1,16 @@
 package com.CESIZen.prod.service;
 
 import com.CESIZen.prod.dto.*;
+import com.CESIZen.prod.dto.diagnostic.DiagnosticExportDTO;
+import com.CESIZen.prod.dto.diagnostic.DiagnosticResultDTO;
+import com.CESIZen.prod.dto.user.UpdatePasswordDTO;
 import com.CESIZen.prod.dto.user.UpdateUserDTO;
 import com.CESIZen.prod.dto.user.UserDTO;
+import com.CESIZen.prod.dto.user.UserExportDTO;
 import com.CESIZen.prod.entity.RoleEnum;
 import com.CESIZen.prod.entity.User;
 import com.CESIZen.prod.entity.UserStatusEnum;
+import com.CESIZen.prod.exception.BadRequestException;
 import com.CESIZen.prod.exception.NotFoundException;
 import com.CESIZen.prod.repository.DiagnosticResultRepository;
 import com.CESIZen.prod.repository.PasswordResetTokenRepository;
@@ -65,25 +70,43 @@ public class UserService {
         User user = securityUtils.getCurrentUser(authentication);
         logger.info("Mise à jour des informations de l'utilisateur courant : {}", user.getUsername());
 
-        if (updateDTO.getUsername() != null) {
+        if (updateDTO.getUsername() != null && !updateDTO.getUsername().equals(user.getUsername())) {
+            if (userRepository.existsByUsernameAndDeletedFalse(updateDTO.getUsername())) {
+                logger.warn("Mise à jour échouée : username '{}' déjà utilisé", updateDTO.getUsername());
+                throw new BadRequestException("Le username est déjà utilisé.");
+            }
             logger.info("Mise à jour du username : {}", updateDTO.getUsername());
             user.setUsername(updateDTO.getUsername());
         }
 
-        if (updateDTO.getEmail() != null) {
+        if (updateDTO.getEmail() != null && !updateDTO.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmailAndDeletedFalse(updateDTO.getEmail())) {
+                logger.warn("Mise à jour échouée : email '{}' déjà utilisé", updateDTO.getEmail());
+                throw new BadRequestException("Email déjà utilisé");
+            }
             logger.info("Mise à jour de l'email : {}", updateDTO.getEmail());
             user.setEmail(updateDTO.getEmail());
-        }
-
-        if (updateDTO.getPassword() != null) {
-            logger.info("Mise à jour du mot de passe");
-            user.setPassword(passwordEncoder.encode(updateDTO.getPassword()));
         }
 
         userRepository.save(user);
         logger.info("Utilisateur {} mis à jour avec succès", user.getUsername());
         return new UserDTO(user);
     }
+
+    public MessageDTO updatePassword(Authentication authentication, UpdatePasswordDTO dto) {
+        User user = securityUtils.getCurrentUser(authentication);
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Ancien mot de passe incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+
+        logger.info("Mot de passe mis à jour pour l'utilisateur {}", user.getUsername());
+        return new MessageDTO("Mot de passe mis à jour avec succès");
+    }
+
 
     public MessageDTO deleteCurrentUser(Authentication authentication) {
         User user = securityUtils.getCurrentUser(authentication);
@@ -133,9 +156,19 @@ public class UserService {
     public byte[] exportUserData(Authentication authentication) {
         User user = securityUtils.getCurrentUser(authentication);
         logger.info("Export des données utilisateur pour : {}", user.getUsername());
+
         try {
+            List<DiagnosticExportDTO> diagnostics = diagnosticResultRepository
+                    .findAllByUserId(user.getId())
+                    .stream()
+                    .map(DiagnosticExportDTO::new)
+                    .collect(Collectors.toList());
+
+            UserExportDTO exportDTO = new UserExportDTO(user, diagnostics);
+
             ObjectMapper mapper = new ObjectMapper();
-            byte[] data = mapper.writeValueAsBytes(new UserDTO(user));
+            byte[] data = mapper.writeValueAsBytes(exportDTO);
+
             logger.info("Export des données utilisateur {} réussi", user.getUsername());
             return data;
         } catch (Exception e) {
@@ -143,6 +176,7 @@ public class UserService {
             throw new RuntimeException("Erreur lors de l'export des données utilisateur", e);
         }
     }
+
 
     @Transactional
     public MessageDTO requestDataDeletion(Authentication authentication) {

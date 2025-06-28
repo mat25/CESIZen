@@ -5,6 +5,12 @@ public class UpdateResourceDTO {
     private String content;
     private String imageUrl;
 
+    public UpdateResourceDTO(String title, String content, String imageUrl) {
+        this.title = title;
+        this.content = content;
+        this.imageUrl = imageUrl;
+    }
+
     public String getTitle() {
         return title;
     }

@@ -4,6 +4,8 @@ public class TokenDTO {
     private String token;
     private Long id;
 
+    public TokenDTO() {}
+
     public TokenDTO(String token,Long id) {
         this.token = token;
         this.id = id;

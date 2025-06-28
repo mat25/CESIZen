@@ -46,7 +46,6 @@ public class WebSecurityConfig {
     }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Updated configuration for Spring Security 6.x
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(withDefaults())
@@ -65,6 +64,7 @@ public class WebSecurityConfig {
                                 .requestMatchers("/auth/**").permitAll()
 
                                 .requestMatchers(HttpMethod.GET,"/diagnostic").permitAll()
+                                .requestMatchers(HttpMethod.POST,"/diagnostic/submit").permitAll()
                                 .requestMatchers("/diagnostic/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/diagnostic/ranges/**").hasRole("ADMIN")
 
@@ -86,7 +86,6 @@ public class WebSecurityConfig {
                         .authenticationEntryPoint(authEntryPointJwt)
                         .accessDeniedHandler(accessDeniedHandler)
                 );
-        // Add the JWT Token filter before the UsernamePasswordAuthenticationFilter
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

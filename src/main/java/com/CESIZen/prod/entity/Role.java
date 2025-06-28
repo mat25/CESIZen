@@ -20,6 +20,10 @@ public class Role {
 
     public Role() {}
 
+    public Role(RoleEnum name) {
+        this.name = name;
+    }
+
     // Getter et Setter
     public Integer getId() {
         return id;

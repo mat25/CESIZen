@@ -6,6 +6,7 @@ import com.CESIZen.prod.dto.resetPassword.ResetPasswordRequestDTO;
 import com.CESIZen.prod.entity.*;
 import com.CESIZen.prod.repository.PasswordResetTokenRepository;
 import com.CESIZen.prod.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,15 +23,20 @@ public class ResetPasswordService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public ResetPasswordService(UserRepository userRepository,
                                 PasswordResetTokenRepository tokenRepository,
-                                PasswordEncoder passwordEncoder) {
+                                PasswordEncoder passwordEncoder,
+                                EmailService emailService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
+
+    @Transactional
     public MessageDTO requestReset(ResetPasswordRequestDTO dto) {
         log.info("Demande de réinitialisation de mot de passe pour email={}", dto.getEmail());
 
@@ -44,18 +50,20 @@ public class ResetPasswordService {
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(15);
 
         tokenRepository.deleteByUserId(user.getId());
+        tokenRepository.flush();
         log.info("Suppression des anciens tokens pour l'utilisateur id={}", user.getId());
 
         PasswordResetToken resetToken = new PasswordResetToken(token, user, expiry);
         tokenRepository.save(resetToken);
         log.info("Nouveau token de réinitialisation créé pour l'utilisateur id={}, token={}", user.getId(), token);
 
-        // Envoyer email ici
         System.out.println("Lien de réinitialisation : https://frontend/reset-password?token=" + token);
+        emailService.sendResetPasswordEmail(user.getEmail(), token);
 
         return new MessageDTO("Lien de réinitialisation envoyé à l'adresse email");
     }
 
+    @Transactional
     public MessageDTO confirmReset(ResetPasswordConfirmDTO dto) {
         log.info("Confirmation de réinitialisation du mot de passe avec token={}", dto.getToken());
 

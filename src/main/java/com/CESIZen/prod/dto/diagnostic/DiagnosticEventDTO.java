@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public class DiagnosticEventDTO {
-    @NotNull(message = "L'id ne peut pas être nul")
     private Long id;
     @NotBlank(message = "Le label ne peut pas être vide")
     private String label;

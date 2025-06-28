@@ -3,7 +3,6 @@ package com.CESIZen.prod.dto.user;
 public class UpdateUserDTO {
     private String username;
     private String email;
-    private String password;
 
     // Getters et setters
     public String getUsername() {
@@ -20,13 +19,5 @@ public class UpdateUserDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }
