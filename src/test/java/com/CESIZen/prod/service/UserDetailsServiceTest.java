@@ -25,7 +25,6 @@ public class UserDetailsServiceTest {
 
     @Test
     public void testLoadUserByUsername_UserFound() {
-        // Arrange
         String username = "testuser";
         String password = "securepassword";
         User mockUser = new User();
@@ -34,10 +33,8 @@ public class UserDetailsServiceTest {
 
         when(userRepository.findByUsernameAndDeletedFalse(username)).thenReturn(mockUser);
 
-        // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        // Assert
         assertNotNull(userDetails);
         assertEquals(username, userDetails.getUsername());
         assertEquals(password, userDetails.getPassword());
@@ -46,11 +43,9 @@ public class UserDetailsServiceTest {
 
     @Test
     public void testLoadUserByUsername_UserNotFound() {
-        // Arrange
         String username = "unknownuser";
         when(userRepository.findByUsernameAndDeletedFalse(username)).thenReturn(null);
 
-        // Act & Assert
         UsernameNotFoundException exception = assertThrows(
                 UsernameNotFoundException.class,
                 () -> userDetailsService.loadUserByUsername(username)
